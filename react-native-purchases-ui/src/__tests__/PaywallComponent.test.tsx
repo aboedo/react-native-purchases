@@ -2,7 +2,6 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import RevenueCatUIMock from '../../src/RevenueCatUIMock'; // Import the mock directly
 import {
-  PAYWALL_RESULT,
   PURCHASES_ERROR_CODE,
   // The following are not strictly needed for these tests as we're checking if callbacks are called,
   // not necessarily the exact shape of internal mock data passed to them,

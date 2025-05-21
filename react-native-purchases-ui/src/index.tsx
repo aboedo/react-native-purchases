@@ -161,13 +161,13 @@ if (isMockMode) {
 
   const InternalPaywall =
     UIManager.getViewManagerConfig('Paywall') != null
-      ? requireNativeComponent<FullScreenPaywallViewProps>('Paywall')
+      ? requireNativeComponent<FullScreenPaywallViewProps>('Paywall') as any
       : () => {
         throw new Error(LINKING_ERROR);
       };
 
   const InternalPaywallFooterView = UIManager.getViewManagerConfig('Paywall') != null
-    ? requireNativeComponent<InternalFooterPaywallViewProps>('RCPaywallFooterView')
+    ? requireNativeComponent<InternalFooterPaywallViewProps>('RCPaywallFooterView') as any
     : () => {
       throw new Error(LINKING_ERROR);
     };

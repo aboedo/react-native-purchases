@@ -1,17 +1,22 @@
-import React, { ReactNode } from 'react';
-import { View, Text, StyleSheet, StyleProp, ViewStyle, TouchableOpacity } from 'react-native'; // Removed Modal, Button
+import React from 'react';
+import type { ReactNode } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'; // Removed Modal, Button
+import type { StyleProp, ViewStyle } from 'react-native';
 import {
   PAYWALL_RESULT,
-  CustomerInfo,
-  PurchasesError,
-  PurchasesOffering,
-  PurchasesPackage,
-  PurchasesStoreTransaction,
   REFUND_REQUEST_STATUS,
   VERIFICATION_RESULT,
   PURCHASES_ERROR_CODE, // Added for mockPurchasesErrorPlaceholder
   PRODUCT_CATEGORY, // Added for mockPackage
   PACKAGE_TYPE, // Added for mockPackage
+} from '@revenuecat/purchases-typescript-internal';
+import type {
+  CustomerInfo,
+  PurchasesError,
+  PurchasesOffering,
+  PurchasesPackage,
+  PurchasesStoreProduct,
+  PurchasesStoreTransaction,
 } from '@revenuecat/purchases-typescript-internal';
 import Purchases from 'react-native-purchases'; // To use the potentially mocked Purchases module
 
@@ -116,7 +121,16 @@ interface PlaceholderPaywallProps {
 }
 
 const mockCustomerInfoPlaceholder: CustomerInfo = {
-  entitlements: { all: {}, active: {} },
+  entitlements: {
+    all: {
+      // verification is required by PurchasesEntitlementInfos
+      verification: VERIFICATION_RESULT.NOT_REQUESTED,
+    },
+    active: {
+      // verification is required by PurchasesEntitlementInfos
+      verification: VERIFICATION_RESULT.NOT_REQUESTED,
+    }
+  },
   activeSubscriptions: [],
   allPurchasedProductIdentifiers: [],
   latestExpirationDate: null,
@@ -174,7 +188,7 @@ const mockPurchasesErrorPlaceholder: PurchasesError = {
   message: "User cancelled the purchase in mock.",
   userInfo: {
     readableErrorCode: "USER_CANCELLED",
-    underlyingErrorMessage: "Mock underlying error message for cancellation.",
+    nativeErrorMessage: "Mock underlying error message for cancellation.",
   },
   userCancelled: true,
 };
@@ -192,15 +206,18 @@ const PlaceholderPaywall: React.FC<PlaceholderPaywallProps> = ({
 }) => {
   const handlePurchase = () => {
     onPurchaseCompleted();
+    onDismiss();
   };
 
   const handleCancelOrError = () => { // Renamed for clarity
     onPurchaseError(mockPurchasesErrorPlaceholder);
+    onDismiss();
   };
 
   const handleClose = () => {
     // For this mock, closing is treated like a cancellation/error for simplicity.
     onPurchaseError(mockPurchasesErrorPlaceholder);
+    onDismiss();
   };
 
   const handleRestore = () => {
@@ -209,6 +226,7 @@ const PlaceholderPaywall: React.FC<PlaceholderPaywallProps> = ({
     } else if (onRestoreError) { // Call restore error if restore completed is not defined
       onRestoreError(mockPurchasesErrorPlaceholder); // Or a specific restore error
     }
+    onDismiss();
   };
 
   return (
@@ -305,7 +323,7 @@ export default class RevenueCatUI {
     onPurchaseStarted,
     onPurchaseCompleted,
     onPurchaseError,
-    onPurchaseCancelled, // This is for the 'X' button if different from general error
+    // onPurchaseCancelled, // This is for the 'X' button if different from general error - Removed as it's unused
     onRestoreStarted,
     onRestoreCompleted,
     onRestoreError,
@@ -315,25 +333,25 @@ export default class RevenueCatUI {
     const handlePurchaseWrapper = () => {
       onPurchaseStarted?.({ packageBeingPurchased: mockPackage });
       onPurchaseCompleted?.({ customerInfo: mockCustomerInfoPlaceholder, storeTransaction: mockStoreTransactionPlaceholder });
-      onDismiss?.();
+      // onDismiss is called by PlaceholderPaywall
     };
 
     const handleErrorWrapper = (error: PurchasesError) => { // PlaceholderPaywall now passes the error
       onPurchaseStarted?.({ packageBeingPurchased: mockPackage }); // Assume purchase was attempted
       onPurchaseError?.({ error }); // Use the error from PlaceholderPaywall
-      onDismiss?.();
+      // onDismiss is called by PlaceholderPaywall
     };
     
     const handleRestoreWrapper = () => {
       onRestoreStarted?.();
       onRestoreCompleted?.({ customerInfo: mockCustomerInfoPlaceholder });
-      onDismiss?.();
+      // onDismiss is called by PlaceholderPaywall
     };
 
     const handleRestoreErrorWrapper = (error: PurchasesError) => { // PlaceholderPaywall could pass an error
         onRestoreStarted?.();
         onRestoreError?.({ error }); // Use the error from PlaceholderPaywall
-        onDismiss?.();
+        // onDismiss is called by PlaceholderPaywall
     };
 
     // This is specifically for the 'X' button in PlaceholderPaywall
