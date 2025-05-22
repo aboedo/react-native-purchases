@@ -7,33 +7,73 @@ import {
   REFUND_REQUEST_STATUS
 } from "@revenuecat/purchases-typescript-internal";
 import type { StyleProp, ViewStyle } from "react-native";
-
+// @ts-ignore: expo-constants is an optional dependency
 import MockRevenueCatUI from './RevenueCatUIMock';
 
 export { PAYWALL_RESULT } from "@revenuecat/purchases-typescript-internal";
 
 // All exportable type/interface definitions from the original file remain here at the top level
 export interface PresentPaywallParams {
+  /**
+   * Whether to display the close button or not.
+   * Only available for original template paywalls. Ignored for V2 Paywalls.
+   */
   displayCloseButton?: boolean;
+  /**
+   * The offering to load the paywall with. This will be the "current" offering by default.
+   */
   offering?: PurchasesOffering;
+  /**
+   * The fontFamily name to use in the Paywall. In order to add a font family, add it in the react native app and make
+   * sure to run `npx react-native-asset` so it's added to the native components.
+   * Supported font types are `.ttf` and `.otf`.
+   * Make sure the file names follow the convention:
+   * - Regular: MyFont.ttf/MyFont.otf
+   * - Bold: MyFont_bold.ttf/MyFont_bold.otf
+   * - Italic: MyFont_italic.ttf/MyFont_italic.otf
+   * - Bold and Italic: MyFont_bold_italic.ttf/MyFont_bold_italic.otf
+   * Only available for original template paywalls. Ignored for V2 Paywalls.
+   */
   fontFamily?: string | null;
 }
 
 export type PresentPaywallIfNeededParams = PresentPaywallParams & {
+  /**
+   * The paywall will only be presented if this entitlement is not active.
+   */
   requiredEntitlementIdentifier: string;
 };
 
 export interface PaywallViewOptions {
+  /**
+   * The offering to load the paywall with. This will be the "current" offering by default.
+   */
   offering?: PurchasesOffering | null;
+  /**
+   * The fontFamily name to use in the Paywall. In order to add a font family, add it in the react native app and make
+   * sure to run `npx react-native-asset` so it's added to the native components.
+   * Supported font types are `.ttf` and `.otf`.
+   * Make sure the file names follow the convention:
+   * - Regular: MyFont.ttf/MyFont.otf
+   * - Bold: MyFont_bold.ttf/MyFont_bold.otf
+   * - Italic: MyFont_italic.ttf/MyFont_italic.otf
+   * - Bold and Italic: MyFont_bold_italic.ttf/MyFont_bold_italic.otf
+   * Only available for original template paywalls. Ignored for V2 Paywalls.
+   */
   fontFamily?: string | null;
 }
 
 export interface FullScreenPaywallViewOptions extends PaywallViewOptions {
+  /**
+   * Whether to display the close button or not.
+   * Only available for original template paywalls. Ignored for V2 Paywalls.
+   */
   displayCloseButton?: boolean | false;
 }
 
+// Currently the same as the base type, but can be extended later if needed
 export interface FooterPaywallViewOptions extends PaywallViewOptions {
-  // Additional properties can be added here if needed
+  // Additional properties for FooterPaywallViewOptions can be added here if needed in the future
 }
 
 type FullScreenPaywallViewProps = {
@@ -82,24 +122,53 @@ export type CustomerCenterManagementOption =
   | 'refund_request'
   | 'change_plans'
   | 'unknown'
-  | string;
+  | string; // This is to prevent breaking changes when the native SDK adds new options
 
 export type CustomerCenterManagementOptionEvent =
   | { option: 'custom_url'; url: string }
   | { option: Exclude<CustomerCenterManagementOption, 'custom_url'>; url: null };
 
 export interface CustomerCenterCallbacks {
+  /**
+   * Called when a feedback survey is completed with the selected option ID.
+   */
   onFeedbackSurveyCompleted?: ({feedbackSurveyOptionId}: { feedbackSurveyOptionId: string }) => void;
+  /**
+   * Called when the manage subscriptions section is being shown.
+   */
   onShowingManageSubscriptions?: () => void;
+  /**
+   * Called when a restore operation is completed successfully.
+   */
   onRestoreCompleted?: ({customerInfo}: { customerInfo: CustomerInfo }) => void;
+  /**
+   * Called when a restore operation fails.
+   */
   onRestoreFailed?: ({error}: { error: PurchasesError }) => void;
+  /**
+   * Called when a restore operation starts.
+   */
   onRestoreStarted?: () => void;
+  /**
+   * Called when a refund request starts with the product identifier. iOS-only callback.
+   */
   onRefundRequestStarted?: ({productIdentifier}: { productIdentifier: string }) => void;
+  /**
+   * Called when a refund request completes with status information. iOS-only callback.
+   */
   onRefundRequestCompleted?: ({productIdentifier, refundRequestStatus}: { productIdentifier: string; refundRequestStatus: REFUND_REQUEST_STATUS }) => void;
+  /**
+   * Called when a customer center management option is selected.
+   * For 'custom_url' options, the url parameter will contain the URL.
+   * For all other options, the url parameter will be null.
+   */
   onManagementOptionSelected?: (event: CustomerCenterManagementOptionEvent) => void;
 }
 
 export interface PresentCustomerCenterParams {
+  /**
+   * Optional callbacks for customer center events.
+   */
   callbacks?: CustomerCenterCallbacks;
 }
 
@@ -107,6 +176,7 @@ let RevenueCatUIToExport: any;
 let isExpoGoForUI = false;
 
 try {
+  // @ts-ignore: expo-constants is an optional dependency
   const Constants = require('expo-constants').default;
   if (Constants && Constants.executionEnvironment === "storeClient") {
     isExpoGoForUI = true;
@@ -128,7 +198,7 @@ if (isMockMode) {
   }
 } else {
   // All original React Native specific imports, native module usages, and the original class definition go here.
-  const ReactNative = require("react-native"); 
+  const ReactNative = require("react-native");
   const {
     NativeEventEmitter,
     NativeModules,
@@ -161,13 +231,13 @@ if (isMockMode) {
 
   const InternalPaywall =
     UIManager.getViewManagerConfig('Paywall') != null
-      ? requireNativeComponent<FullScreenPaywallViewProps>('Paywall') as any
+      ? requireNativeComponent<FullScreenPaywallViewProps>('Paywall')
       : () => {
         throw new Error(LINKING_ERROR);
       };
 
   const InternalPaywallFooterView = UIManager.getViewManagerConfig('Paywall') != null
-    ? requireNativeComponent<InternalFooterPaywallViewProps>('RCPaywallFooterView') as any
+    ? requireNativeComponent<InternalFooterPaywallViewProps>('RCPaywallFooterView')
     : () => {
       throw new Error(LINKING_ERROR);
     };
@@ -178,6 +248,11 @@ if (isMockMode) {
       PRESENT_PAYWALL_DISPLAY_CLOSE_BUTTON: true
     }
 
+    /**
+     * The result of presenting a paywall. This will be the last situation the user experienced before the paywall closed.
+     * @readonly
+     * @enum {string}
+     */
     public static PAYWALL_RESULT = PAYWALL_RESULT;
 
     /**
@@ -268,6 +343,10 @@ if (isMockMode) {
                                                                                                     onRestoreError,
                                                                                                     onDismiss,
                                                                                                   }) => {
+      // We use 20 as the default paddingBottom because that's the corner radius in the Android native SDK.
+      // We also listen to safeAreaInsetsDidChange which is only sent from iOS and which is triggered when the
+      // safe area insets change. Not adding this extra padding on iOS will cause the content of the scrollview
+      // to be hidden behind the rounded corners of the paywall.
       const [paddingBottom, setPaddingBottom] = useState(20);
       const [height, setHeight] = useState(0);
 
@@ -295,6 +374,7 @@ if (isMockMode) {
           <ScrollView contentContainerStyle={{flexGrow: 1, paddingBottom}}>
             {children}
           </ScrollView>
+          {/*Adding negative margin to the footer view to make it overlap with the extra padding of the scroll*/}
           <InternalPaywallFooterView
             style={Platform.select({
               ios: {marginTop: -20},
@@ -396,7 +476,9 @@ if (isMockMode) {
           subscriptions.push(subscription);
         }
 
+        // Return a promise that resolves when the customer center is dismissed
         return RNCustomerCenter.presentCustomerCenter().finally(() => {
+          // Clean up all event listeners when the customer center is dismissed
           subscriptions.forEach(subscription => subscription.remove());
         });
       }
